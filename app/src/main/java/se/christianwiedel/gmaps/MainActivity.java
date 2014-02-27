@@ -8,6 +8,7 @@ import android.app.FragmentTransaction;
 import android.app.LoaderManager;
 import android.app.PendingIntent;
 import android.content.ContentValues;
+import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
@@ -24,6 +25,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
@@ -35,6 +38,7 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.PolygonOptions;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -101,20 +105,27 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         }
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mLocationClient.connect();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mLocationClient.disconnect();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
+
         int id = item.getItemId();
         if (id == R.id.action_settings) {
             return true;
@@ -124,8 +135,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 
     @Override
     public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-        // When the given tab is selected, switch to the corresponding page in
-        // the ViewPager.
+
         mViewPager.setCurrentItem(tab.getPosition());
     }
 
@@ -137,10 +147,11 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
     }
 
-    /**
-     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
-     * one of the sections/tabs/pages.
+
+     /*
+     * SECTION PAGER ADAPTER
      */
+
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
         public SectionsPagerAdapter(FragmentManager fm) {
@@ -174,22 +185,31 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
             Locale l = Locale.getDefault();
             switch (position) {
                 case MAP_POSITION:
-                    // return R.string.mapFragTitle;
-                    //return map frag
+                    return getString(R.string.map_title).toUpperCase();
                 case LIST_POSITION:
-                    // return mListfragment;
-                    //return list fragment
+                    return getString(R.string.list_title).toUpperCase();
             }
             return null;
         }
     }
 
-    public static class ListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+
+    /*
+     * LIST FRAGMENT
+     */
+
+    public class ListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+
+        //private SimpleCursorAdapter mListAdapter;
+        private ArrayList<String> mGeofenceData;
+        private ArrayAdapter<String> mAdapter;
+
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-            // Inflate the layout for this fragment
+
             return inflater.inflate(R.layout.list_fragment, container, false);
+
         }
 
         @Override
@@ -208,18 +228,12 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         }
     }
 
-    class GeofenceData {
 
-        GeofenceData(float radius, float latitude, float longitude) {
-            this.radius = radius;
-            this.latitude = latitude;
-            this.longitude = longitude;
-        }
 
-        public float radius;
-        public float latitude;
-        public float longitude;
-    }
+
+     /*
+     * MAP FRAGMENT
+     */
 
     public class MyMapFragment extends MapFragment implements GoogleMap.OnMapLongClickListener, GoogleMap.OnMapClickListener,
             GooglePlayServicesClient.ConnectionCallbacks, GooglePlayServicesClient.OnConnectionFailedListener,
@@ -227,7 +241,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 
         private static final float GEOFENCE_RADIUS = 25.0f;
         private PolygonOptions mPolygonOptions = null;
-        private LocationClient mLocationClient;
+        // private LocationClient mLocationClient;
         private List<Geofence> mGeofences;
         private Map<String, GeofenceData> mGeofenceDatas;
 
@@ -237,11 +251,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 
             mGeofences = new LinkedList<Geofence>();
             mGeofenceDatas = new HashMap<String, GeofenceData>();
-
-/*
-            mMap = ((com.google.android.gms.maps.MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
-*/
         }
+
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -329,17 +340,9 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         }
 
 
-        /*
-@Override
-public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                         Bundle savedInstanceState) {
-    // Inflate the layout for this fragment
-    return inflater.inflate(R.layout.map_fragment, container, false);
-}
-*/
         @Override
         public void onConnected(Bundle bundle) {
-
+            getLoaderManager().initLoader(0, null, this);
         }
 
         @Override
@@ -358,13 +361,51 @@ public View onCreateView(LayoutInflater inflater, ViewGroup container,
         }
 
         @Override
-        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-            return null;
+        public void onPause() {
+            super.onPause();
+            mGeofences.clear();
+            mGeofenceDatas.clear();
         }
 
         @Override
-        public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        public void onResume() {
+            super.onResume();
+        }
 
+        @Override
+        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+            return new CursorLoader(getActivity(), MyGeofenceStore.Contract.GEOFENCES,
+                    new String[]{MyGeofenceStore.Contract.ID,
+                            MyGeofenceStore.Contract.LATITUDE,
+                            MyGeofenceStore.Contract.LONGITUDE,
+                            MyGeofenceStore.Contract.RADIUS,
+                            MyGeofenceStore.Contract.CREATED},
+                    null, null, "");
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+            mGeofences.clear();
+            mGeofenceDatas.clear();
+            getMap().clear();
+
+            while (cursor != null && cursor.moveToNext()) {
+                String requestId = cursor
+                        .getString(cursor
+                                .getColumnIndex(MyGeofenceStore.Contract.ID));
+                float latitude = cursor
+                        .getFloat(cursor
+                                .getColumnIndex(MyGeofenceStore.Contract.LATITUDE));
+                float longitude = cursor
+                        .getFloat(cursor
+                                .getColumnIndex(MyGeofenceStore.Contract.LONGITUDE));
+                float radius = cursor
+                        .getFloat(cursor
+                                .getColumnIndex(MyGeofenceStore.Contract.RADIUS));
+
+
+                addAndPaintGeofence(requestId, new LatLng(latitude, longitude), radius);
+            }
         }
 
         @Override
@@ -373,6 +414,19 @@ public View onCreateView(LayoutInflater inflater, ViewGroup container,
         }
 
 
+    }
+
+    class GeofenceData {
+
+        GeofenceData(float radius, float latitude, float longitude) {
+            this.radius = radius;
+            this.latitude = latitude;
+            this.longitude = longitude;
+        }
+
+        public float radius;
+        public float latitude;
+        public float longitude;
     }
 
 }

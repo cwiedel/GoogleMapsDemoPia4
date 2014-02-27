@@ -28,7 +28,7 @@ public class MyGeofenceStore extends ContentProvider{
         public static final String RADIUS = "radius";
         public static final String CREATED = "created";
         public static final String TABLE_NAME = "geofence";
-        public static final String AUTHORITY = "se.christianwiedel.gmapsdemo.provider";
+        public static final String AUTHORITY = "se.christianwiedel.gmaps.provider";
         public static final Uri GEOFENCES
                 = Uri.parse("content://" + AUTHORITY + "/" + TABLE_NAME);
     }

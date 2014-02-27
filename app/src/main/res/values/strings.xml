@@ -8,5 +8,7 @@
     <string name="action_settings">Settings</string>
     <string name="mapFragTitle">Map</string>
     <string name="gapi_key">AIzaSyCh8GPrZ1PW8_A6I_wvnTD9OE9iaqbfAPY</string>
+    <string name="map_title">Map</string>
+    <string name="list_title">Geofence list</string>
 
 </resources>

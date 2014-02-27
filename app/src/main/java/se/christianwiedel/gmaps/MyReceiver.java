@@ -10,7 +10,7 @@ import android.widget.Toast;
  */
 public class MyReceiver extends BroadcastReceiver{
 
-    public static final String ACTION_GEOFENCE_TOAST = "se.christianwiedel.gmapsdemo.GEOFENCE_TOAST";
+    public static final String ACTION_GEOFENCE_TOAST = "se.christianwiedel.gmaps.GEOFENCE_TOAST";
     public MyReceiver() {
     }
     @Override
