@@ -307,9 +307,11 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
             addGeofencesToList(requestId, latLng, radius);
             Intent showGeofenceToast =
                     new Intent(MyReceiver.ACTION_GEOFENCE_TOAST);
+
             PendingIntent pendingIntent
                     = PendingIntent
                     .getBroadcast(getActivity(), 0, showGeofenceToast, 0);
+
             mLocationClient.addGeofences(mGeofences, pendingIntent,
                     new LocationClient.OnAddGeofencesResultListener() {
                         @Override
