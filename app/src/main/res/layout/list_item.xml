@@ -1,9 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-android:layout_width="match_parent"
-android:layout_height="wrap_content">
-<TextView
-    android:id="@+id/list_label"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"/>
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/list_label_id"
+        android:fontFamily="sans-serif-light"
+        android:textSize="@dimen/listItemFontSize"
+        android:layout_width="@dimen/colWidthFirst"
+        android:layout_height="@dimen/rowHeight"
+        />
+
+    <TextView
+        android:id="@+id/list_label_latitude"
+        android:fontFamily="sans-serif-light"
+        android:textSize="@dimen/listItemFontSize"
+        android:layout_width="@dimen/colWidth"
+        android:layout_height="@dimen/rowHeight"
+        android:layout_toRightOf="@id/list_label_id" />
+
+    <TextView
+        android:id="@+id/list_label_longitude"
+        android:fontFamily="sans-serif-light"
+        android:textSize="@dimen/listItemFontSize"
+        android:layout_width="@dimen/colWidth"
+        android:layout_height="@dimen/rowHeight"
+        android:layout_toRightOf="@id/list_label_latitude" />
+
+
+
 </RelativeLayout>

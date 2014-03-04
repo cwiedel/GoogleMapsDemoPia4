@@ -26,7 +26,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 
@@ -40,7 +39,6 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.PolygonOptions;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -55,7 +53,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     public static final int MAP_POSITION = 0;
     public static final int LIST_POSITION = 1;
 
-    private ListFragment mListfragment;
     private MyMapFragment mMapfragment;
     private GoogleListFragment mGoogleListFragment;
     private LocationClient mLocationClient;
@@ -66,7 +63,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mListfragment = new ListFragment();
         mMapfragment = new MyMapFragment();
         mGoogleListFragment = new GoogleListFragment();
 
@@ -199,37 +195,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
      * LIST FRAGMENT
      */
 
-    public class ListFragment extends Fragment {
-
-        private SimpleCursorAdapter mListAdapter;
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-
-            View rootview = inflater.inflate(R.layout.list_fragment, container, false);
-
-
-            Cursor cursor = getContentResolver().query(MyGeofenceStore.Contract.GEOFENCES,
-                    new String[] {MyGeofenceStore.Contract.ID}, null, null, null);
-            startManagingCursor(cursor);
-
-            //THE DESIRED COLUMNS TO BE BOUND
-            String[] columns = new String[] {MyGeofenceStore.Contract.ID};
-            //THE XML DEFINED VIEWS WHICH THE DATA WILL BE BOUND TO
-            int[] to = new int[] { R.id.list_label};
-
-            mListAdapter = new SimpleCursorAdapter(getActivity(), R.layout.list_item, cursor,
-                    columns, to);
-
-           ListView geofenceList = (ListView) rootview.findViewById(R.id.geofence_list);
-
-            geofenceList.setAdapter(mListAdapter);
-
-            return rootview;
-
-        }
-    }
 
     public class GoogleListFragment extends ListFragment {
 
@@ -241,14 +206,19 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
             super.onActivityCreated(savedInstanceState);
 
             Cursor cursor = getContentResolver().query(MyGeofenceStore.Contract.GEOFENCES,
-                    new String[] {MyGeofenceStore.Contract.ID},
+                    new String[] {MyGeofenceStore.Contract.ID,
+                            MyGeofenceStore.Contract.LATITUDE,
+                            MyGeofenceStore.Contract.LONGITUDE},
                     null, null, null);
-            startManagingCursor(cursor);
+
+            //startManagingCursor(cursor);
 
 
-            String[] columns = new String[] {MyGeofenceStore.Contract.ID};
+            String[] columns = new String[] {MyGeofenceStore.Contract.ID,
+                    MyGeofenceStore.Contract.LATITUDE,
+                    MyGeofenceStore.Contract.LONGITUDE};
 
-            int[] to = new int[] { R.id.list_label};
+            int[] to = new int[] {R.id.list_label_id, R.id.list_label_latitude, R.id.list_label_longitude};
 
             mListAdapter = new SimpleCursorAdapter(getActivity(),
                     R.layout.list_item,
@@ -350,7 +320,10 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
                     });
 
             CircleOptions circleOptions = new CircleOptions();
-            circleOptions.center(latLng).radius(radius).fillColor(Color.RED);
+            circleOptions.center(latLng).radius(radius)
+                    .fillColor(Color.argb(120, 230, 126, 34))
+                    .strokeWidth(1.0f)
+                    .strokeColor(Color.argb(255, 230, 126, 34));
             getMap().addCircle(circleOptions);
         }
 
