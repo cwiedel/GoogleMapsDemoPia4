@@ -3,6 +3,7 @@ package se.christianwiedel.gmaps;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Fragment;
+import android.app.ListFragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.LoaderManager;
@@ -27,6 +28,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
@@ -47,7 +49,6 @@ import java.util.Map;
 
 public class MainActivity extends Activity implements ActionBar.TabListener {
 
-
     SectionsPagerAdapter mSectionsPagerAdapter;
     ViewPager mViewPager;
 
@@ -56,6 +57,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 
     private ListFragment mListfragment;
     private MyMapFragment mMapfragment;
+    private GoogleListFragment mGoogleListFragment;
     private LocationClient mLocationClient;
 
 
@@ -66,6 +68,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 
         mListfragment = new ListFragment();
         mMapfragment = new MyMapFragment();
+        mGoogleListFragment = new GoogleListFragment();
 
         mLocationClient = new LocationClient(this, mMapfragment, mMapfragment);
 
@@ -166,10 +169,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
             switch (position) {
                 case MAP_POSITION:
                     return mMapfragment;
-                //return map frag
                 case LIST_POSITION:
-                    return mListfragment;
-                //return list fragment
+                    return mGoogleListFragment;
             }
             return null;
         }
@@ -198,36 +199,76 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
      * LIST FRAGMENT
      */
 
-    public class ListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+    public class ListFragment extends Fragment {
 
-        //private SimpleCursorAdapter mListAdapter;
-        private ArrayList<String> mGeofenceData;
-        private ArrayAdapter<String> mAdapter;
+        private SimpleCursorAdapter mListAdapter;
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
 
-            return inflater.inflate(R.layout.list_fragment, container, false);
+            View rootview = inflater.inflate(R.layout.list_fragment, container, false);
 
-        }
 
-        @Override
-        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-            return null;
-        }
+            Cursor cursor = getContentResolver().query(MyGeofenceStore.Contract.GEOFENCES,
+                    new String[] {MyGeofenceStore.Contract.ID}, null, null, null);
+            startManagingCursor(cursor);
 
-        @Override
-        public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+            //THE DESIRED COLUMNS TO BE BOUND
+            String[] columns = new String[] {MyGeofenceStore.Contract.ID};
+            //THE XML DEFINED VIEWS WHICH THE DATA WILL BE BOUND TO
+            int[] to = new int[] { R.id.list_label};
 
-        }
+            mListAdapter = new SimpleCursorAdapter(getActivity(), R.layout.list_item, cursor,
+                    columns, to);
 
-        @Override
-        public void onLoaderReset(Loader<Cursor> loader) {
+           ListView geofenceList = (ListView) rootview.findViewById(R.id.geofence_list);
+
+            geofenceList.setAdapter(mListAdapter);
+
+            return rootview;
 
         }
     }
 
+    public class GoogleListFragment extends ListFragment {
+
+        private static final String TAG = "List";
+        private SimpleCursorAdapter mListAdapter;
+
+        @Override
+        public void onActivityCreated(Bundle savedInstanceState) {
+            super.onActivityCreated(savedInstanceState);
+
+            Cursor cursor = getContentResolver().query(MyGeofenceStore.Contract.GEOFENCES,
+                    new String[] {MyGeofenceStore.Contract.ID},
+                    null, null, null);
+            startManagingCursor(cursor);
+
+
+            String[] columns = new String[] {MyGeofenceStore.Contract.ID};
+
+            int[] to = new int[] { R.id.list_label};
+
+            mListAdapter = new SimpleCursorAdapter(getActivity(),
+                    R.layout.list_item,
+                    cursor,
+                    columns,
+                    to);
+
+
+            setListAdapter(mListAdapter);
+        }
+
+        @Override
+        public void onListItemClick(ListView l, View v, int position, long id) {
+            super.onListItemClick(l, v, position, id);
+            Log.e(TAG, "position " + position + " id " + id);
+
+            Uri geofenceUri = Uri.withAppendedPath(MyGeofenceStore.Contract.GEOFENCES, String.valueOf(id));
+            getContentResolver().delete(geofenceUri, null, null);
+        }
+    }
 
 
 
@@ -288,6 +329,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
             if (!didRemove) {
                 String requestId = insertGeofenceInDatabase(latLng, GEOFENCE_RADIUS);
                 addAndPaintGeofence(requestId, latLng, GEOFENCE_RADIUS);
+                // add to list
             }
         }
 
@@ -389,6 +431,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
             mGeofenceDatas.clear();
             getMap().clear();
 
+            // get from db
             while (cursor != null && cursor.moveToNext()) {
                 String requestId = cursor
                         .getString(cursor
